@@ -33,6 +33,7 @@ def _pack(name_version,
           postinst=None,
           nobuild=False,
           preserve=False,
+          depends=None,
           ):
     """
         --dest: package up the imorted tree to be installed relative to the dirpath named by dest.
@@ -59,6 +60,10 @@ def _pack(name_version,
     controld.update(dict(package=name,
                          version=version,
                          description=description))
+    if depends:
+        if not isinstance(depends, list):
+            depends = map(str.strip, depends.split(','))
+        controld['depends'].extend(depends)
 
     # place the control file
     lines=[]
@@ -134,7 +139,8 @@ def _pack_paths(path_stream,
                 dest=None,
                 postinst=None,
                 nobuild=False,
-                workdir=None):
+                workdir=None,
+                depends=None):
     """
         usage:
             find /usr/lib/foo | $0 pack paths foo_0.1 'awsome app foo'
@@ -152,6 +158,7 @@ def _pack_paths(path_stream,
         cpio_stream=pipe.stdout,
         dest=dest,
         postinst=postinst,
+        depends=depends,
         nobuild=nobuild)
 
     status=pipe.wait()
@@ -272,7 +279,7 @@ class Panya(object):
 panya=Panya()
 
 @panya.command
-def pack_cpio(name_version, description, dest=None, postinst=None, nobuild=False, workdir=None):
+def pack_cpio(name_version, description, dest=None, postinst=None, nobuild=False, workdir=None, depends=None):
     """ pack cpio archive into a .deb package.
     usage:
      $ find /usr/lib/foo/ | cpio -o | debify.py pack cpio foo_1.0 '<desc>'
@@ -287,13 +294,14 @@ def pack_cpio(name_version, description, dest=None, postinst=None, nobuild=False
           cpio_stream=sys.stdin,
           dest=dest,
           postinst=postinst,
+          depends=depends,
           nobuild=nobuild)
 
     deb_file, workdir=info
     report(deb_file)
 
 @panya.command
-def pack_paths(name_version, description, dest=None, postinst=None, nobuild=False, workdir=None):
+def pack_paths(name_version, description, dest=None, postinst=None, nobuild=False, workdir=None, depends=None):
     """ pack paths fed to stdin as a .deb package.
     usage:
     find /usr/lib/foo | $0 pack paths foo_1.0 '<desc>'
@@ -305,13 +313,14 @@ def pack_paths(name_version, description, dest=None, postinst=None, nobuild=Fals
         dest=dest,
         postinst=postinst,
         nobuild=nobuild,
+        depends=depends,
         workdir=workdir)
 
     deb_file, workdir=info
     report(deb_file)
 
 @panya.command
-def pack_dir(name_version, description, dir, dest=None, postinst=None, nobuild=False, workdir=None):
+def pack_dir(name_version, description, dir, dest=None, postinst=None, nobuild=False, workdir=None, depends=None):
     """ package files under a directory
     usage:
     $0 pack dir foo_0.1 'most awsome foo' /usr/lib/foo --dest=/alt/lib/
@@ -328,6 +337,7 @@ def pack_dir(name_version, description, dir, dest=None, postinst=None, nobuild=F
           cpio_stream=pipe.stdout,
           dest=dest,
           postinst=postinst,
+          depends=depends,
           nobuild=nobuild)
 
     if pipe.wait()!=0:
