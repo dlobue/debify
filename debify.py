@@ -325,7 +325,7 @@ def pack_dir(name_version, description, dir, dest=None, postinst=None, nobuild=F
     usage:
     $0 pack dir foo_0.1 'most awsome foo' /usr/lib/foo --dest=/alt/lib/
     """
-    base_dir,target_dir=os.path.split(dir.rstrip('/'))
+    base_dir,target_dir=os.path.split(os.path.abspath(dir.rstrip('/')))
     pipe=Popen(['/bin/sh', '-c',
                 '/usr/bin/find {target_dir} | /bin/cpio -o --quiet'.format(target_dir=target_dir)],
                stdout=PIPE,
