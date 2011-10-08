@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys,os
-import re
+import optparse
 from subprocess import Popen, PIPE
 from tempfile import mkdtemp
 
@@ -422,8 +422,19 @@ def main():
         cmd_f=panya.dispatcher[major][minor]
     except:
         die("no such command '%s' '%s'" % (major, minor), panya.usage())
+
+    #build an option parser based on the command's keyword arguments
+    kwnames = cmd_f.func_code.co_varnames[cmd_f.func_code.co_argcount - len(cmd_f.func_defaults):cmd_f.func_code.co_argcount]
+
+    parser = optparse.OptionParser()
+    for kwname,kwdefault in zip(kwnames, cmd_f.func_defaults):
+        parser.add_option('--%s' % kwname, default=kwdefault)
+    (kwobj, args) = parser.parse_args(args=list(args))
+
+    kwargs = dict(zip(kwnames, (getattr(kwobj, x) for x in kwnames)))
+
     # invoke it
-    cmd_f(*args)
+    cmd_f(*args, **kwargs)
 
 if __name__=='__main__':
 
