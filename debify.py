@@ -25,8 +25,8 @@ control_fields=[
     ('description', None),
     ]
 
-def _pack(name_version, 
-          description, 
+def _pack(name_version,
+          description,
           workdir=None,
           cpio_stream=sys.stdin,
           dest=None,
@@ -74,10 +74,10 @@ def _pack(name_version,
             die("unexpected type for %s %s" % (name, type(val)))
         lines.append("%s: %s" % (name[:1].upper()+name[1:], val))
     file(os.path.join(DEBIAN, 'control'), 'w').write('\n'.join(lines+['']))
-    # 
+    #
     # stage the build dir
     # populate with content
-    # 
+    #
     def import_tree():
         cmd="/bin/cpio -id --no-absolute-filenames --quiet"
         debug('#', cmd)
@@ -93,17 +93,17 @@ def _pack(name_version,
     mkdir_p(splice_point)
     debug('#', 'splice_point:', splice_point)
     with_dir(splice_point, import_tree)
-    # 
+    #
     # configure the build dir
-    # 
+    #
     if postinst:
         # user-supplied postinst script
         staged_postinst=os.path.join(DEBIAN,'postinst')
         shcopy(postinst, staged_postinst)
         os.chmod(staged_postinst, 0755)
-    # 
+    #
     # build
-    # 
+    #
     deb_file=None
     if not nobuild:
         deb_file=name_version + '.deb'
@@ -118,7 +118,7 @@ def _pack(name_version,
         status=pipe.wait()
     #
     # cleanup
-    # 
+    #
     if not preserve:
         try:
             rm_rf(workdir)
@@ -128,27 +128,27 @@ def _pack(name_version,
                                                                                 error=str(e)))
     return deb_file, workdir
 
-def _pack_paths(path_stream, 
-                name_version, 
-                description, 
-                dest=None, 
-                postinst=None, 
-                nobuild=False, 
+def _pack_paths(path_stream,
+                name_version,
+                description,
+                dest=None,
+                postinst=None,
+                nobuild=False,
                 workdir=None):
     """
         usage:
             find /usr/lib/foo | $0 pack paths foo_0.1 'awsome app foo'
     """
-    # 
+    #
     # convert path stream to cpio archive
-    # 
+    #
     cmd="/bin/cpio -o --quiet"
     pipe=Popen(filter(None, cmd.split(' ')), stdin=path_stream, stdout=PIPE)
 
     ret=_pack(
-        name_version, 
-        description, 
-        workdir=workdir, 
+        name_version,
+        description,
+        workdir=workdir,
         cpio_stream=pipe.stdout,
         dest=dest,
         postinst=postinst,
@@ -234,7 +234,7 @@ class Panya(object):
         # populate help map with docs: help --> 'show files' --> show_files.func_doc
         # xx how to sort? lexical or frequency of usage?
         for major, cmap in self.dispatcher.items():
-            self.dispatcher.setdefault('help',{})[major]=(lambda ma: 
+            self.dispatcher.setdefault('help',{})[major]=(lambda ma:
                                                           lambda mi=None: self.help(ma,mi))(major)
 
         return f
@@ -261,9 +261,9 @@ class Panya(object):
             if major=='help':
                 continue
             for minor, cfun in cmap.items():
-                synopsis.append("%-25s %s" % (' '.join([os.path.basename(sys.argv[0]), 
-                                                     major, 
-                                                     minor+':']), 
+                synopsis.append("%-25s %s" % (' '.join([os.path.basename(sys.argv[0]),
+                                                     major,
+                                                     minor+':']),
                                             (cfun.func_doc or '').split('\n')[0].strip()))
         return "".join(["\nUsage:",
                         "\n    ".join(['']+synopsis),
@@ -274,16 +274,16 @@ panya=Panya()
 @panya.command
 def pack_cpio(name_version, description, dest=None, postinst=None, nobuild=False, workdir=None):
     """ pack cpio archive into a .deb package.
-    usage: 
+    usage:
      $ find /usr/lib/foo/ | cpio -o | debify.py pack cpio foo_1.0 '<desc>'
      $ (cd /usr/lib; find foo | cpio -o) | debify.py pack cpio foo_1.0 '<desc>' --dest==/alt/lib
 
     """
     debug('#', 'workdir:', workdir)
     info=_pack(
-          name_version, 
-          description, 
-          workdir=workdir, 
+          name_version,
+          description,
+          workdir=workdir,
           cpio_stream=sys.stdin,
           dest=dest,
           postinst=postinst,
@@ -299,12 +299,12 @@ def pack_paths(name_version, description, dest=None, postinst=None, nobuild=Fals
     find /usr/lib/foo | $0 pack paths foo_1.0 '<desc>'
     """
     info=_pack_paths(
-        sys.stdin, 
-        name_version, 
-        description, 
-        dest=dest, 
-        postinst=postinst, 
-        nobuild=nobuild, 
+        sys.stdin,
+        name_version,
+        description,
+        dest=dest,
+        postinst=postinst,
+        nobuild=nobuild,
         workdir=workdir)
 
     deb_file, workdir=info
@@ -317,14 +317,14 @@ def pack_dir(name_version, description, dir, dest=None, postinst=None, nobuild=F
     $0 pack dir foo_0.1 'most awsome foo' /usr/lib/foo --dest=/alt/lib/
     """
     base_dir,target_dir=os.path.split(dir.rstrip('/'))
-    pipe=Popen(['/bin/sh', '-c', 
-                '/usr/bin/find {target_dir} | /bin/cpio -o --quiet'.format(target_dir=target_dir)], 
-               stdout=PIPE, 
+    pipe=Popen(['/bin/sh', '-c',
+                '/usr/bin/find {target_dir} | /bin/cpio -o --quiet'.format(target_dir=target_dir)],
+               stdout=PIPE,
                cwd=base_dir)
     info=_pack(
-          name_version, 
-          description, 
-          workdir=workdir, 
+          name_version,
+          description,
+          workdir=workdir,
           cpio_stream=pipe.stdout,
           dest=dest,
           postinst=postinst,
@@ -365,12 +365,12 @@ def deb_relocate(src_pkg_name, new_pkg_name=None, dest=None, postinst=None, nobu
     pipe=Popen(filter(None, cmd.split(' ')), stdout=PIPE)
 
     info=_pack_paths(pipe.stdout,
-                     name_version, 
-                     description, 
+                     name_version,
+                     description,
                      dest=dest,
                      postinst=postinst,
                      nobuild=nobuild,
-                     workdir=workdir, 
+                     workdir=workdir,
                      )
 
     assert pipe.wait()==0, 'FAIL: '+cmd
@@ -387,7 +387,7 @@ def show_files(deb_file):
 
     # ar pf - data.tar.gz | gunzip | tar tf -
     # ar does not read from stdin
-    cmd=['/bin/sh', '-c', 
+    cmd=['/bin/sh', '-c',
          '{ar} pf {deb_file} data.tar.gz | {gunzip} | {tar} tf -'.format(deb_file=deb_file, **cmds)]
     p=Popen(cmd)
     if p.wait()!=0:
@@ -416,5 +416,5 @@ def main():
     cmd_f(*args)
 
 if __name__=='__main__':
-    
+
     main()
